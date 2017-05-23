@@ -6,6 +6,7 @@ __pycache__/
 #user defined
 test.py
 *.sqlite
+src/ui/ui_py/*_ui.py
 
 # C extensions
 *.so
