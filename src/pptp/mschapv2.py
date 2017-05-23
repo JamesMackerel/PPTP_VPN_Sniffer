@@ -42,6 +42,12 @@ def ChallengeResponse(challenge, passwordHash):
     return response
 
 
+def HashNtPasswordHash(passwordhash):
+    hasher = hashlib.new('md4')
+    hasher.update(passwordhash)
+    return hasher.digest()
+
+
 @printResult
 def GenerateNTResponse(authenticatorChallenge, peerChallenge, username, password):
     challenge = ChallengeHash(peerChallenge, authenticatorChallenge, username)
