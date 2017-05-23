@@ -15,6 +15,7 @@ class LoginLog(db.Entity):
     id = PrimaryKey(int, auto=True)
     timestamp = Required(datetime)
     user = Required(User)
+    ip = Required(str)
 
 
 class HttpAccess(db.Entity):
@@ -37,6 +38,7 @@ class FtpAccess(db.Entity):
 class EmailWarning(db.Entity):
     id = PrimaryKey(int, auto=True)
     host = Required(str)
+    method = Optional(str)
 
 
 class SniffSession(db.Entity):
