@@ -1,4 +1,4 @@
-from .userinfo_ui import Ui_userInfoWidget
+from .ui_py.userinfo_ui import Ui_userInfoWidget
 
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QWidget

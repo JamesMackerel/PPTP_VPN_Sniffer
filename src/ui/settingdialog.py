@@ -1,4 +1,4 @@
-from .settingdialog_ui import Ui_SettingDialog
+from .ui_py.settingdialog_ui import Ui_SettingDialog
 
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from PyQt5.QtCore import pyqtSlot

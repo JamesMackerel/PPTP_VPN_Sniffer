@@ -1,4 +1,4 @@
-from .managelogdialog_ui import *
+from .ui_py.managelogdialog_ui import *
 from database import *
 
 from PyQt5.QtCore import *
