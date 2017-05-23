@@ -13,3 +13,11 @@ note: ** This vpn sniffer is not able to distinguash traffic from different user
 
 In addition, this project includes some crypto functions that I wrote when I did research on PPTP protocol.
 If someone is in trouble with MSCHAPV2 key generating or challenge value generating, this is the example you are looking for.
+
+
+dependencies:
+1. linux
+2. pyqt5
+3. pyqtgraph
+4. pyshark
+5. psutil
