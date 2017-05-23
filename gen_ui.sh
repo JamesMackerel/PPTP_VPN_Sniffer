@@ -3,12 +3,13 @@
 echo 'Going into ui directory...'
 cd src/ui
 
-for file in ./*
+for file in ./ui_files/*
 do
     if [ ${file##*.} = "ui" ]; then
-        echo Removing ${file%.*}_ui.py
-        rm ${file%.*}_ui.py
-        echo Generating ${file%.*}_ui.py
-        pyuic5 -x ${file} -o ${file%.*}_ui.py
+        filename=${file##./*/}
+        echo Removing ./ui_py/${filename%.*}_ui.py
+        rm ./ui_py/${filename%.*}_ui.py
+        echo Generating ./ui_py/${filename%.*}_ui.py
+        pyuic5 -x ./ui_files/${filename} -o ./ui_py/${filename%.*}_ui.py
     fi
 done
