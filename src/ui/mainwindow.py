@@ -17,12 +17,12 @@ from database import *
 
 
 class FtpListModel(QtCore.QAbstractTableModel):
-    logData = []# type:list[FtpAccess]
 
     def __init__(self, parent=None):
+        self.logData = []  # type:list[FtpAccess]
         super().__init__()
         with db_session:
-            logs = FtpAccess.select(lambda l:l.sniff_session.current_session==True)[:]
+            logs = FtpAccess.select(lambda l: l.sniff_session.current_session == True)[:]
             for l in logs:
                 self.logData.append(l)
 
@@ -67,10 +67,10 @@ class FtpListModel(QtCore.QAbstractTableModel):
 
 
 class HttpTableModel(QtCore.QAbstractTableModel):
-    logData = None
 
     def __init__(self):
         super().__init__()
+        self.logData = None
 
         with db_session:
             self.logData = HttpAccess.select(lambda l: l.sniff_session.current_session == True)[:]
@@ -109,7 +109,6 @@ class HttpTableModel(QtCore.QAbstractTableModel):
         self.layoutChanged.emit()
 
 
-
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
@@ -118,7 +117,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tabView.setCurrentIndex(0)
 
         with db_session:
-            sessions = SniffSession.select(lambda s:s.current_session==True)[:]
+            sessions = SniffSession.select(lambda s: s.current_session == True)[:]
             for s in sessions:
                 s.current_session = False
 
@@ -212,8 +211,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 # username = User[msg['data']['user']].username
                 # self.userInfoWidgets[username].add_http(msg['data'])
 
+    @QtCore.pyqtSlot()
+    def on_emailWarningButton_clicked(self):
+        from .warninghostsdialog import WarningHostsDialog
+        WarningHostsDialog().exec_()
+
     def updateTrafficDiagram(self):
-        self.trafficData.append(self.sniffer_process.data['traffic_per_second']/1024)
+        self.trafficData.append(self.sniffer_process.data['traffic_per_second'] / 1024)
         self.sniffer_process.data["traffic_per_second"] = 0
         self.trafficPlotCurve.setData(np.array(self.trafficData))
 
@@ -221,21 +225,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.sniff_started:
             self.sniffer_process.stop()
 
-    # @QtCore.pyqtSlot()
-    # def on_userListWidget_itemSelectionChanged(self):
-    #     current_item = self.userListWidget.currentItem()
-    #
-    #     username = current_item.text()
-    #     logging.debug('Displaying user: ' + username)
-    #     # hide the graphics view and show the associate user's info view
-    #     self.graphicsView.hide()
-    #     if self.currentShownUserInfoWidget is not None:
-    #         self.currentShownUserInfoWidget.hide()
-    #     self.userInfoWidgets[username].show()
-    #     self.currentShownUserInfoWidget = self.userInfoWidgets[username]
+            # @QtCore.pyqtSlot()
+            # def on_userListWidget_itemSelectionChanged(self):
+            #     current_item = self.userListWidget.currentItem()
+            #
+            #     username = current_item.text()
+            #     logging.debug('Displaying user: ' + username)
+            #     # hide the graphics view and show the associate user's info view
+            #     self.graphicsView.hide()
+            #     if self.currentShownUserInfoWidget is not None:
+            #         self.currentShownUserInfoWidget.hide()
+            #     self.userInfoWidgets[username].show()
+            #     self.currentShownUserInfoWidget = self.userInfoWidgets[username]
 
-    # @QtCore.pyqtSlot()
-    # def on_backPushButton_clicked(self):
-    #     self.currentShownUserInfoWidget.hide()
-    #     self.currentShownUserInfoWidget = None
-    #     self.graphicsView.show()
+            # @QtCore.pyqtSlot()
+            # def on_backPushButton_clicked(self):
+            #     self.currentShownUserInfoWidget.hide()
+            #     self.currentShownUserInfoWidget = None
+            #     self.graphicsView.show()
