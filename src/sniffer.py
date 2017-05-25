@@ -40,7 +40,7 @@ class PptpUserLogger(object):
                 logging.info("%s's ip is %s" % (user.name, user.ip))
 
                 for f in self.user_login_handler:
-                    f(user.name)
+                    f(user)
 
         # elif packet.highest_layer == "IPCP":
         #     if packet.ipcp.ppp_code.hex_value == 2:  # it's a config ack! S->C
@@ -67,7 +67,7 @@ class PptpUserLogger(object):
                 del self.users[str(user.ip)]
                 logging.info("%s disconnected" % user.name)
                 for f in self.user_logout_handler:
-                    f(username)
+                    f(user)
 
     def add_user_logged_in_handler(self, handler):
         self.user_login_handler.append(handler)
@@ -163,15 +163,15 @@ class Sniffer(object):
                 logging.info('skip ftp data packets')
                 return
 
-    def send_user_login(self, user: str):
-        self.data_queue.put({'type': 'user_login', 'username': user})
+    def send_user_login(self, user: LogInUser):
+        self.data_queue.put({'type': 'user_login', 'user': user})
         # write to database
         with db_session:
-            user_logged_in = User.get(username=user)
+            user_logged_in = User.get(username=user.name)
             if user_logged_in is None:
-                user_logged_in = User(username=user)
+                user_logged_in = User(username=user.name)
                 commit()
-            LoginLog(timestamp=datetime.now(), user=user_logged_in)
+            LoginLog(timestamp=datetime.now(), user=user_logged_in, ip=user.ip)
 
     def send_user_logout(self, user: str):
-        self.data_queue.put({'type': 'user_logout', 'username': user})
+        self.data_queue.put({'type': 'user_logout', 'user': user})

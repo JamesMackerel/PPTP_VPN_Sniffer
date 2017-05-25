@@ -194,10 +194,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         while not self.sniffer_process.data_queue.empty():
             msg = self.sniffer_process.data_queue.get()
             if msg['type'] == 'user_login':
-                self.userListWidget.addItem(msg['username'])
+                self.userListWidget.addItem(msg['user'].name)
 
             elif msg['type'] == 'user_logout':
-                items_to_delete = self.userListWidget.findItems(msg['username'], QtCore.Qt.MatchExactly)
+                items_to_delete = self.userListWidget.findItems(msg['user'].name, QtCore.Qt.MatchExactly)
                 if len(items_to_delete) > 0:
                     for item in items_to_delete:
                         logging.debug('removing: %s' % item.text())
