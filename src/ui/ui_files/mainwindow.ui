@@ -31,6 +31,13 @@
        </spacer>
       </item>
       <item>
+       <widget class="QPushButton" name="loginLogPushButton">
+        <property name="text">
+         <string>Login Log</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="emailWarningButton">
         <property name="text">
          <string>Email warning</string>
@@ -63,7 +70,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabView">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">

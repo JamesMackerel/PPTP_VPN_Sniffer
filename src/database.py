@@ -9,12 +9,15 @@ class User(db.Entity):
     id = PrimaryKey(int, auto=True)
     username = Required(str)
     login_logs = Set('LoginLog')
+    http_accesses = Set('HttpAccess')
+    ftp_accesses = Set('FtpAccess')
 
 
 class LoginLog(db.Entity):
     id = PrimaryKey(int, auto=True)
     timestamp = Required(datetime)
     user = Required(User)
+    sniff_session = Required('SniffSession')
     ip = Required(str)
 
 
@@ -23,6 +26,7 @@ class HttpAccess(db.Entity):
     host = Required(str)
     timestamp = Required(datetime)
     method = Required(str)
+    user = Required(User)
     sniff_session = Required('SniffSession')
 
 
@@ -30,22 +34,24 @@ class FtpAccess(db.Entity):
     id = PrimaryKey(int, auto=True)
     host = Required(str)
     action = Required(int)
-    content = Required(str)
+    content = Optional(str)
     timestamp = Required(datetime)
+    user = Required(User)
     sniff_session = Required('SniffSession')
 
 
 class EmailWarning(db.Entity):
     id = PrimaryKey(int, auto=True)
-    host = Required(str)
-    method = Optional(str)
+    host = Required(unicode)
+    method = Optional(str, nullable=True)
 
 
 class SniffSession(db.Entity):
     id = PrimaryKey(int, auto=True)
     timestamp = Required(datetime)
-    ftp_accesses = Set(FtpAccess)
+    login_logs = Set(LoginLog)
     http_accesses = Set(HttpAccess)
+    ftp_accesses = Set(FtpAccess, cascade_delete=True)
     current_session = Required(bool)
 
 

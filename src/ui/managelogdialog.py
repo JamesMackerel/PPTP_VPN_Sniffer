@@ -1,8 +1,8 @@
-from .ui_py.managelogdialog_ui import *
-from database import *
-
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QDialog
+
+from database import *
+from .ui_py.managelogdialog_ui import *
 
 
 class HttpTableModel(QAbstractTableModel):

@@ -1,7 +1,8 @@
-from .ui_py.warninghostsdialog_ui import *
-from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import *
+from PyQt5.QtWidgets import QDialog
+
 from database import *
+from .ui_py.warninghostsdialog_ui import *
 
 
 class RuleTableModle(QAbstractTableModel):
