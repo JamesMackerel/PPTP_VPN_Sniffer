@@ -30,7 +30,7 @@ class LoginLogModel(QAbstractTableModel):
             if col == 0:
                 return d.id
             elif col == 1:
-                return str(d.timestamp)
+                return str(d.timestamp.strftime('%b-%d-%y %H:%M:%S'))
             elif col == 2:
                 return d.ip
 
@@ -75,6 +75,7 @@ class UserLoginLogDialog(QDialog, Ui_loginLogDialog):
         username = self.userListWidget.currentItem().text()
         self.logTableView.setModel(LoginLogModel(username))
         self.logTableView.resizeColumnsToContents()
+        self.logTableView.hideColumn(0)
 
     @pyqtSlot()
     def on_deleteLogPushButton_clicked(self):
