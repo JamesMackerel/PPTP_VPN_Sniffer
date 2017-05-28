@@ -99,7 +99,6 @@ class UserSniffer(threading.Thread):
             if res is not None:
                 res['uid'] = self.user_id
                 self.q.put(res)
-                print('in :' + str(res))
             if self.exit_flag:
                 return
 

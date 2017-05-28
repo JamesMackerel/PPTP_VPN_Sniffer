@@ -217,7 +217,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         commit()
                     self.ftpLogModel.add_log(log.id)
                 elif msg['type'] == 'http_log':
-                    print(msg)
                     with db_session:
                         log = HttpAccess(host=msg['host'], method=msg['method'], timestamp=msg['timestamp'],
                                          sniff_session=SniffSession.get(current_session=True), user=User[msg['uid']])

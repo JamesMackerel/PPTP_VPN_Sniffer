@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import QDialog
 from database import *
 from .ui_py.managelogdialog_ui import *
 
+from typing import List
+
 
 class HttpTableModel(QAbstractTableModel):
     logData = []
@@ -17,18 +19,19 @@ class HttpTableModel(QAbstractTableModel):
                 self.logData.append(l)
 
     def columnCount(self, *args, **kwargs):
-        return 4
+        return 5
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         return len(self.logData)
 
     def headerData(self, p_int, Qt_Orientation, int_role=None):
-        headers = ['id', 'Host', 'Method', 'Timestamp']
+        headers = ['id', 'User', 'Host', 'Method', 'Timestamp']
         if int_role == Qt.DisplayRole and Qt_Orientation == Qt.Horizontal:
             return headers[p_int]
 
         return QVariant()
 
+    @db_session
     def data(self, QModelIndex, int_role=None):
         # return super().data(QModelIndex, int_role)
         if int_role == Qt.DisplayRole:
@@ -38,11 +41,13 @@ class HttpTableModel(QAbstractTableModel):
             if col == 0:
                 return self.logData[row].id
             elif col == 1:
-                return self.logData[row].host
+                return User[self.logData[row].user.id].username
             elif col == 2:
-                return self.logData[row].method
+                return self.logData[row].host
             elif col == 3:
-                return str(self.logData[row].timestamp)
+                return self.logData[row].method
+            elif col == 4:
+                return str(self.logData[row].timestamp.strftime('%b-%d-%y %H:%M:%S'))
 
     def add_log(self, log_id):
         log = HttpAccess[log_id]
@@ -62,7 +67,6 @@ class HttpTableModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
 
-
 class FtpListModel(QAbstractTableModel):
     logData = []  # type:list[FtpAccess]
 
@@ -74,13 +78,13 @@ class FtpListModel(QAbstractTableModel):
                 self.logData.append(l)
 
     def columnCount(self, *args, **kwargs):
-        return 5
+        return 6
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         return len(self.logData)
 
     def headerData(self, p_int, Qt_Orientation, int_role=None):
-        headers = ['id', 'Host', 'Command', 'Command Arg', 'Timestamp']
+        headers = ['id', 'User', 'Host', 'Command', 'Command Arg', 'Timestamp']
         if int_role == Qt.DisplayRole and Qt_Orientation == Qt.Horizontal:
             return headers[p_int]
 
@@ -95,16 +99,18 @@ class FtpListModel(QAbstractTableModel):
             if col == 0:
                 return self.logData[row].id
             elif col == 1:
-                return self.logData[row].host
+                return self.logData[row].user.username
             elif col == 2:
+                return self.logData[row].host
+            elif col == 3:
                 action = self.logData[row].action
                 if action == 0:
                     return 'USER'
                 elif action == 1:
                     return 'RETR'
-            elif col == 3:
-                return self.logData[row].content
             elif col == 4:
+                return self.logData[row].content
+            elif col == 5:
                 return str(self.logData[row].timestamp)
 
     def add_log(self, log_id):
@@ -133,18 +139,19 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.sessions = [] # type:List[SniffSession]
 
         with db_session:
             sessions = SniffSession.select()[:]
             for s in sessions:
-                self.comboBox.addItem(str(s.timestamp), s)
+                self.sessionListWidget.addItem(str(s.timestamp.strftime('%b-%d-%y %H:%M')))
+                self.sessions.append(s)
 
-        self.httpTableView.hideColumn(0)
-        self.ftpTableView.hideColumn(0)
+        self.setWindowState(Qt.WindowMaximized)
 
     @pyqtSlot(int)
-    def on_comboBox_currentIndexChanged(self, index):
-        session = self.comboBox.currentData()
+    def on_sessionListWidget_currentRowChanged(self, index:int):
+        session = self.sessions[index]
 
         try:
             self.ftpModel.new_select(session)
@@ -157,7 +164,22 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
             self.ftpTableView.setModel(self.ftpModel)
             self.httpTableView.setModel(self.httpModel)
 
+        self.httpTableView.hideColumn(0)
+        self.httpTableView.resizeColumnsToContents()
+        self.ftpTableView.hideColumn(0)
+        self.ftpTableView.resizeColumnsToContents()
+
     @pyqtSlot()
-    def on_pushButton_clicked(self):
-        index = self.ftpTableView.currentIndex().row()
-        self.ftpModel.delete_log(index)
+    @db_session
+    def on_deleteSessionButton_clicked(self):
+        index = self.sessionListWidget.currentIndex().row()
+        self.sessionListWidget.takeItem(index)
+        session_to_delete = self.sessions[index]
+        SniffSession[session_to_delete.id].delete()
+        del self.sessions[index]
+
+    @pyqtSlot()
+    @db_session
+    def on_deleteFtpButton_clicked(self):
+        # self.ftpTableView.model().delete_log
+        pass
