@@ -41,10 +41,10 @@
       </widget>
      </item>
      <item>
-      <widget class="QTableView" name="ftpTableView">
+      <widget class="QTableView" name="httpTableView">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-         <horstretch>3</horstretch>
+         <horstretch>4</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
@@ -57,7 +57,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QTableView" name="httpTableView">
+      <widget class="QTableView" name="ftpTableView">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
          <horstretch>3</horstretch>
@@ -90,6 +90,19 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="deleteHttpButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>4</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Delete HTTP Log</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="deleteFtpButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -99,19 +112,6 @@
        </property>
        <property name="text">
         <string>Delete FTP Log</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="deleteHttpButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>3</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Delete HTTP Log</string>
        </property>
       </widget>
      </item>

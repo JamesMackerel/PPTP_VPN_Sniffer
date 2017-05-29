@@ -68,13 +68,13 @@ class HttpTableModel(QtCore.QAbstractTableModel):
         self.logData = []  # type:list[HttpAccess]
 
     def columnCount(self, *args, **kwargs):
-        return 4
+        return 5
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         return len(self.logData)
 
     def headerData(self, p_int, Qt_Orientation, int_role=None):
-        headers = ['id', 'User', 'Host', 'Method', 'Timestamp']
+        headers = ['id', 'User', 'URI', 'Host', 'Method', 'Timestamp']
         if int_role == Qt.DisplayRole and Qt_Orientation == Qt.Horizontal:
             return headers[p_int]
 
@@ -93,8 +93,10 @@ class HttpTableModel(QtCore.QAbstractTableModel):
             elif col == 2:
                 return self.logData[row].host
             elif col == 3:
-                return self.logData[row].method
+                return self.logData[row].uri
             elif col == 4:
+                return self.logData[row].method
+            elif col == 5:
                 return str(self.logData[row].timestamp)
 
     def add_log(self, log_id):
@@ -198,7 +200,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def sniffer_message_handler(self):
         while not self.sniffer_process.data_queue.empty():
             msg = self.sniffer_process.data_queue.get()
-            print(msg)
             try:
                 if msg['type'] == 'user_login':
                     self.userListWidget.addItem(msg['user'].name)
@@ -212,14 +213,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 elif msg['type'] == 'ftp_log':
                     with db_session:
                         log = FtpAccess(host=msg['host'], action=msg['action'], content=msg['content'],
-                                        timestamp=msg['timestamp'], sniff_session=SniffSession.get(current_session=True),
+                                        timestamp=msg['timestamp'],
+                                        sniff_session=SniffSession.get(current_session=True),
                                         user=User[msg['uid']])
                         commit()
                     self.ftpLogModel.add_log(log.id)
                 elif msg['type'] == 'http_log':
                     with db_session:
                         log = HttpAccess(host=msg['host'], method=msg['method'], timestamp=msg['timestamp'],
-                                         sniff_session=SniffSession.get(current_session=True), user=User[msg['uid']])
+                                         sniff_session=SniffSession.get(current_session=True), user=User[msg['uid']],
+                                         uri=msg['uri'])
                         commit()
                     self.httpLogModel.add_log(log.id)
             except KeyError:

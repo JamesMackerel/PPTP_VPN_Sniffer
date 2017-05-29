@@ -24,7 +24,7 @@ class LogInUser:
 class PacketParser:
     @staticmethod
     def parse(p):
-        supported_protocol = ['HTTP']
+        supported_protocol = ['HTTP', 'FTP']
         if str(p.highest_layer) not in supported_protocol:
             return None
 
@@ -36,25 +36,29 @@ class PacketParser:
                     host = str(p.http.host)
                     time_now = datetime.now()
                     method = str(p.http.request_method)
+                    uri = str(p.http.request_uri) if 'request_uri' in p.http.field_names else ""
 
                     res['type'] = 'http_log'
                     res['host'] = host
                     res['timestamp'] = time_now
                     res['method'] = method
+                    res['uri'] = uri
                     return res
                 except AttributeError:
                     print(p)
 
-        if 'FTP' in p.highest_layer:
+        if str(p.highest_layer) in 'FTP':
             try:
                 if 'request_command' in p.ftp.field_names:
                     host = str(p.ip.dst)
                     if str(p.ftp.request_command) == 'USER':  # this is a login request
                         action = 0
                         content = str(p.ftp.request_arg)
-                    if str(p.ftp.request_command) == 'RETR':
+                    elif str(p.ftp.request_command) == 'RETR':
                         action = 1
                         content = str(p.ftp.request_arg)
+                    else:
+                        return
 
                     res['type'] = 'ftp_log'
                     res['host'] = host
@@ -113,7 +117,6 @@ class PptpUserLogger(object):
     def process(self, packet):
         if packet.highest_layer == "CHAP":
             if packet.chap.Code.hex_value == 2:  # client response, remember the user C->S
-                print(packet.chap.field_names)
                 self.log_in_user.append(
                     LogInUser(packet.gre.key_call_id.hex_value, packet.chap.identifier.hex_value,
                               str(packet.chap.name), str(packet.ip.src)))
@@ -178,7 +181,7 @@ class Sniffer(object):
         self.user_manager.add_user_logged_in_handler(self.send_user_login)
         self.user_manager.add_user_logged_out_handler(self.send_user_logout)
         self.user_manager.add_user_logged_in_handler(self.sniff_user)
-        self.user_manager.add_user_logged_out_handler(self.stop_sniff_user)
+        # self.user_manager.add_user_logged_out_handler(self.stop_sniff_user)
 
     def start(self):
         self.data['total_traffic'] = 0

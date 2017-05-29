@@ -38,16 +38,16 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="emailWarningButton">
+       <widget class="QPushButton" name="searchLogButton">
         <property name="text">
-         <string>Email warning</string>
+         <string>Manage Log</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="searchLogButton">
+       <widget class="QPushButton" name="emailWarningButton">
         <property name="text">
-         <string>Manage Log</string>
+         <string>Email warning</string>
         </property>
        </widget>
       </item>

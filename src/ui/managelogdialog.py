@@ -8,26 +8,26 @@ from typing import List
 
 
 class HttpTableModel(QAbstractTableModel):
-    logData = []
+    headers = ['id', 'User', 'Host', 'URI', 'Method', 'Timestamp']
 
     def __init__(self, s):
         super().__init__()
 
+        self.logData = []
         with db_session:
             logs = s.http_accesses.select()[:]
             for l in logs:
                 self.logData.append(l)
 
     def columnCount(self, *args, **kwargs):
-        return 5
+        return len(self.headers)
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         return len(self.logData)
 
     def headerData(self, p_int, Qt_Orientation, int_role=None):
-        headers = ['id', 'User', 'Host', 'Method', 'Timestamp']
         if int_role == Qt.DisplayRole and Qt_Orientation == Qt.Horizontal:
-            return headers[p_int]
+            return self.headers[p_int]
 
         return QVariant()
 
@@ -45,8 +45,10 @@ class HttpTableModel(QAbstractTableModel):
             elif col == 2:
                 return self.logData[row].host
             elif col == 3:
-                return self.logData[row].method
+                return self.logData[row].uri
             elif col == 4:
+                return self.logData[row].method
+            elif col == 5:
                 return str(self.logData[row].timestamp.strftime('%b-%d-%y %H:%M:%S'))
 
     def add_log(self, log_id):
@@ -66,30 +68,40 @@ class HttpTableModel(QAbstractTableModel):
                 self.logData.append(l)
         self.layoutChanged.emit()
 
+    @db_session
+    def delete_log(self, index:int):
+        self.beginRemoveRows(QModelIndex(), index, index)
+
+        HttpAccess[self.logData[index].id].delete()
+        del self.logData[index]
+
+        self.endRemoveRows()
+
 
 class FtpListModel(QAbstractTableModel):
-    logData = []  # type:list[FtpAccess]
+    headers = ['id', 'User', 'Host', 'Command', 'Command Arg', 'Timestamp']
 
     def __init__(self, s):
         super().__init__()
+        self.logData = []  # type:list[FtpAccess]
         with db_session:
             logs = s.ftp_accesses.select()[:]
             for l in logs:
                 self.logData.append(l)
 
     def columnCount(self, *args, **kwargs):
-        return 6
+        return len(self.headers)
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         return len(self.logData)
 
     def headerData(self, p_int, Qt_Orientation, int_role=None):
-        headers = ['id', 'User', 'Host', 'Command', 'Command Arg', 'Timestamp']
         if int_role == Qt.DisplayRole and Qt_Orientation == Qt.Horizontal:
-            return headers[p_int]
+            return self.headers[p_int]
 
         return QVariant()
 
+    @db_session
     def data(self, QModelIndex, int_role=None):
         # return super().data(QModelIndex, int_role)
         if int_role == Qt.DisplayRole:
@@ -99,7 +111,7 @@ class FtpListModel(QAbstractTableModel):
             if col == 0:
                 return self.logData[row].id
             elif col == 1:
-                return self.logData[row].user.username
+                return User[self.logData[row].user.id].username
             elif col == 2:
                 return self.logData[row].host
             elif col == 3:
@@ -130,9 +142,16 @@ class FtpListModel(QAbstractTableModel):
                 self.logData.append(l)
         self.layoutChanged.emit()
 
+    @db_session
     def delete_log(self, index:int):
+        # del self.logData[index]
+        # self.layoutChanged.emit()
+        self.beginRemoveRows(QModelIndex(), index, index)
+
+        FtpAccess[self.logData[index].id].delete()
         del self.logData[index]
-        self.layoutChanged.emit()
+
+        self.endRemoveRows()
 
 
 class LogManageDialog(Ui_WarningHostsDialog, QDialog):
@@ -181,5 +200,11 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
     @pyqtSlot()
     @db_session
     def on_deleteFtpButton_clicked(self):
-        # self.ftpTableView.model().delete_log
-        pass
+        index = self.ftpTableView.currentIndex().row()
+        self.ftpTableView.model().delete_log(index)
+
+    @pyqtSlot()
+    @db_session
+    def on_deleteHttpButton_clicked(self):
+        index = self.httpTableView.currentIndex().row()
+        self.httpTableView.model().delete_log(index)

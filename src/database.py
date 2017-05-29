@@ -28,6 +28,7 @@ class HttpAccess(db.Entity):
     method = Required(str)
     user = Required(User)
     sniff_session = Required('SniffSession')
+    uri = Optional(str)
 
 
 class FtpAccess(db.Entity):
