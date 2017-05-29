@@ -118,17 +118,13 @@ class PptpUserLogger(object):
                               str(packet.chap.name), str(packet.ip.src)))
                 logging.info(str(packet.chap.name) + ' tried to log in.')
             elif packet.chap.Code.hex_value == 3:  # log in succeed, change the one's status to Success(1) S->C
+                # find who wanted to log in with this account
                 user = [u for u in self.log_in_user if u.identifier == packet.chap.identifier.hex_value][0]
-                user.status = 1
                 user.server_call_id = packet.gre.key_call_id.hex_value
                 logging.info(user.name + '  logged in successfully.')
-                # user.ip = str(packet.ip.src)
                 self.users[user.ip] = user
                 logging.info("%s's ip is %s" % (user.name, user.ip))
                 logging.info("%s's server_call_id is %d" % (user.name, user.server_call_id))
-
-                # for f in self.user_login_handler:
-                #     f(user)
 
         elif packet.highest_layer == "IPCP":
             if packet.ipcp.ppp_code.hex_value == 2:  # it's a config ack! S->C
@@ -137,7 +133,7 @@ class PptpUserLogger(object):
                     user = [u for u in self.log_in_user if u.server_call_id == packet.gre.key_call_id.hex_value][0]
                 except IndexError:
                     return
-
+                self.log_in_user.remove(user)  # user logged in successfully, remove from log_in_user
                 user.local_ip = str(packet.ipcp.opt_ip_address)
                 self.users[str(packet.ipcp.opt_ip_address)] = user
                 logging.info("%s's local ip is %s" % (user.name, user.local_ip))
