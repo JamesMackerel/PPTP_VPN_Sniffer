@@ -1,5 +1,6 @@
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QDialog
+from PyQt5.QtGui import QColor
 
 from database import *
 from .ui_py.managelogdialog_ui import *
@@ -51,6 +52,18 @@ class HttpTableModel(QAbstractTableModel):
             elif col == 5:
                 return str(self.logData[row].timestamp.strftime('%b-%d-%y %H:%M:%S'))
 
+        if int_role == Qt.BackgroundColorRole:
+            col = QModelIndex.column()
+            if col != 2 and col != 4:
+                return
+
+            d = self.logData[QModelIndex.row()]
+            warning_hosts = EmailWarning.select()[:]
+
+            for host in warning_hosts:
+                if d.host == host.host and d.method == host.method:
+                    return QColor(Qt.red)
+
     def add_log(self, log_id):
         log = HttpAccess[log_id]
         self.logData.append(log)
@@ -70,14 +83,14 @@ class HttpTableModel(QAbstractTableModel):
             for l in logs:
                 self.logData.append(l)
         else:
-            logs = select(l for l in HttpAccess if l.user==args[0] and l.sniff_session==s)
+            logs = select(l for l in HttpAccess if l.user == args[0], )
             for l in logs:
                 self.logData.append(l)
 
         self.layoutChanged.emit()
 
     @db_session
-    def delete_log(self, index:int):
+    def delete_log(self, index: int):
         self.beginRemoveRows(QModelIndex(), index, index)
 
         HttpAccess[self.logData[index].id].delete()
@@ -150,7 +163,7 @@ class FtpListModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
     @db_session
-    def delete_log(self, index:int):
+    def delete_log(self, index: int):
         # del self.logData[index]
         # self.layoutChanged.emit()
         self.beginRemoveRows(QModelIndex(), index, index)
@@ -165,7 +178,7 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.sessions = [] # type:List[SniffSession]
+        self.sessions = []  # type:List[SniffSession]
 
         with db_session:
             sessions = SniffSession.select()[:]
@@ -181,7 +194,7 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
         # self.userComboBox.currentIndexChanged.connect(self.on_userComboBox_currentIndexChanged);
 
     @pyqtSlot(int)
-    def on_sessionListWidget_currentRowChanged(self, index:int):
+    def on_sessionListWidget_currentRowChanged(self, index: int):
         session = self.sessions[index]
 
         try:
@@ -230,7 +243,4 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
             return
         session = self.sessions[self.sessionListWidget.currentIndex().row()]
 
-        sql_debug(True)
         self.httpTableView.model().new_select(session, self.userComboBox.currentData())
-        sql_debug(False)
-
