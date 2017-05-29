@@ -60,12 +60,20 @@ class HttpTableModel(QAbstractTableModel):
         self.logData = []
         self.layoutChanged.emit()
 
-    def new_select(self, s):
+    @db_session
+    def new_select(self, s, *args):
         self.logData = []
-        with db_session:
+        if s is None:
+            return
+        if len(args) == 0:
             logs = s.http_accesses.select()[:]
             for l in logs:
                 self.logData.append(l)
+        else:
+            logs = select(l for l in HttpAccess if l.user==args[0] and l.sniff_session==s)
+            for l in logs:
+                self.logData.append(l)
+
         self.layoutChanged.emit()
 
     @db_session
@@ -103,7 +111,6 @@ class FtpListModel(QAbstractTableModel):
 
     @db_session
     def data(self, QModelIndex, int_role=None):
-        # return super().data(QModelIndex, int_role)
         if int_role == Qt.DisplayRole:
             row = QModelIndex.row()
             col = QModelIndex.column()
@@ -165,8 +172,13 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
             for s in sessions:
                 self.sessionListWidget.addItem(str(s.timestamp.strftime('%b-%d-%y %H:%M')))
                 self.sessions.append(s)
+            users = User.select()[:]
+            self.userComboBox.addItem("", None)
+            for u in users:
+                self.userComboBox.addItem(u.username, u)
 
         self.setWindowState(Qt.WindowMaximized)
+        # self.userComboBox.currentIndexChanged.connect(self.on_userComboBox_currentIndexChanged);
 
     @pyqtSlot(int)
     def on_sessionListWidget_currentRowChanged(self, index:int):
@@ -208,3 +220,17 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
     def on_deleteHttpButton_clicked(self):
         index = self.httpTableView.currentIndex().row()
         self.httpTableView.model().delete_log(index)
+
+    @pyqtSlot(int)
+    @db_session
+    def on_userComboBox_currentIndexChanged(self, index):
+        if self.userComboBox.currentText() == "":
+            return
+        if self.httpTableView.model() is None or self.ftpTableView.model() is None:
+            return
+        session = self.sessions[self.sessionListWidget.currentIndex().row()]
+
+        sql_debug(True)
+        self.httpTableView.model().new_select(session, self.userComboBox.currentData())
+        sql_debug(False)
+
