@@ -78,8 +78,8 @@ class UserSniffer(threading.Thread):
         self.user = user
         with db_session:
             self.user_id = User.get(username=self.user.name).id
-        from utils import get_net_interfaces
-        interfaces = get_net_interfaces()
+        from utils import get_ppp_interfaces
+        interfaces = get_ppp_interfaces()
         for i in interfaces:
             if i[1] == user.local_ip:
                 self.interface = i[0]
@@ -92,11 +92,7 @@ class UserSniffer(threading.Thread):
         self.do_sniff()
 
     def do_sniff(self):
-        from configparser import ConfigParser
-        config = ConfigParser()
-        config.read('config.ini')
-        interface = config['DEFAULT']['interface']
-        cap = pyshark.LiveRingCapture(interface=interface, bpf_filter='not udp and ip')
+        cap = pyshark.LiveRingCapture(interface=self.interface, bpf_filter='not udp and ip')
         for p in cap:
             res = PacketParser.parse(p)
             # if there is a parse result, put it into the queue with it's user id
