@@ -3,6 +3,7 @@ from functools import wraps
 import psutil
 import socket
 import numpy as np
+from typing import List, Tuple
 
 
 def print_hex(b):
@@ -29,7 +30,7 @@ def get_net_interfaces():
     net_interfaces = []
     info = psutil.net_if_addrs()
 
-    for k,v in info.items():
+    for k, v in info.items():
         name = k
         address = None
         netmask = None
@@ -44,8 +45,25 @@ def get_net_interfaces():
     return net_interfaces
 
 
+def get_ppp_interfaces():
+    net_interfaces = []
+    info = psutil.net_if_addrs()
+
+    for k, v in info.items():
+        name = k  # type: str
+        ptp = None
+        if not name.startswith('ppp'):
+            continue
+        ptp = v[0].ptp
+
+        net_interfaces.append((name, ptp))
+
+    return net_interfaces
+
+
 class RingBuffer():
     "A 1D ring buffer using numpy arrays"
+
     def __init__(self, length):
         self.data = np.zeros(length, dtype='f')
         self.index = 0
@@ -58,11 +76,11 @@ class RingBuffer():
 
     def get(self):
         "Returns the first-in-first-out data in the ring buffer"
-        idx = (self.index + np.arange(self.data.size)) %self.data.size
+        idx = (self.index + np.arange(self.data.size)) % self.data.size
         return self.data[idx]
 
 
 if __name__ == "__main__":
-    a = get_net_interfaces()
+    a = get_ppp_interfaces()
     for i in a:
         print(i)
