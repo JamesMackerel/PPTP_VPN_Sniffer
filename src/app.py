@@ -24,9 +24,10 @@ if __name__ == "__main__":
 
     for t in translators:
         app.installTranslator(t)
-    # t = QTranslator()
-    # t.load('src/ui/ui_files/mainwindow_zh_CN')
-    # app.installTranslator(t)
+
+    t = QTranslator()
+    t.load('src/ui/mainwindow')
+    app.installTranslator(t)
 
     window = MainWindow()
     window.show()

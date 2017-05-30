@@ -167,7 +167,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_startSnifferButton_clicked(self):
         if self.sniff_started:
             self.sniffer_process.stop()
-            self.startSnifferButton.setText("Start Sniffer")
+            self.startSnifferButton.setText(self.tr("Start Sniffing"))
             self.sniff_started = False
             with db_session:
                 session = SniffSession.get(current_session=True)
@@ -185,7 +185,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.sniff_started = True
             with db_session:
                 SniffSession(timestamp=datetime.now(), current_session=True)
-            self.startSnifferButton.setText("Stop Sniffer")
+            self.startSnifferButton.setText(self.tr("Stop Sniffer"))
             self.user_login_check_timer.start(1000)
             self.update_traffic_update_timer.start(1000)
 
