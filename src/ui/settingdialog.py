@@ -30,6 +30,11 @@ class SettingDialog(QDialog, Ui_SettingDialog):
         if defaultInterfaceIndex != -1:
             self.interfaceComboBox.setCurrentIndex(defaultInterfaceIndex)
 
+        if 'i18n' in config['DEFAULT']:
+            self.i18nComboBox.setCurrentIndex(self.i18nComboBox.findText(config['DEFAULT']['i18n']))
+        else:
+            self.i18nComboBox.setCurrentIndex(0)
+
         # set email texts
         if 'email' in config:
             email = config['email']
@@ -41,10 +46,13 @@ class SettingDialog(QDialog, Ui_SettingDialog):
             if 'ssl' in email:
                 self.useSsl.setChecked(bool(email['ssl']));
 
+        self.i18nChanged = False
+
     @pyqtSlot()
     def on_buttonBox_accepted(self):
         config = ConfigParser()
         config['DEFAULT']['interface'] = self.interfaceComboBox.currentData()
+        config['DEFAULT']['i18n'] = self.i18nComboBox.currentText()
 
         config['email'] = {
             'address': self.emailAddress.text(),
@@ -57,3 +65,12 @@ class SettingDialog(QDialog, Ui_SettingDialog):
 
         with open('config.ini', 'w') as config_file:
             config.write(config_file)
+
+        if self.i18nChanged:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.information(self, self.tr('i18n Changed'), self.tr(
+                'Please restart the application to apply the internationalization setting.'), QMessageBox.Ok)
+
+    @pyqtSlot(int)
+    def on_i18nComboBox_currentIndexChanged(self, index: int):
+        self.i18nChanged = True

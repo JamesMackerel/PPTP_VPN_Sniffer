@@ -200,8 +200,8 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
         try:
             self.ftpModel.new_select(session)
             self.httpModel.new_select(session)
-            self.ftpTableView.resizeColumnsToContents()
-            self.httpTableView.resizeColumnsToContents()
+            # self.ftpTableView.resizeColumnsToContents()
+            # self.httpTableView.resizeColumnsToContents()
         except AttributeError:
             self.ftpModel = FtpListModel(session)
             self.httpModel = HttpTableModel(session)
@@ -209,9 +209,9 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
             self.httpTableView.setModel(self.httpModel)
 
         self.httpTableView.hideColumn(0)
-        self.httpTableView.resizeColumnsToContents()
+        # self.httpTableView.resizeColumnsToContents()
         self.ftpTableView.hideColumn(0)
-        self.ftpTableView.resizeColumnsToContents()
+        # self.ftpTableView.resizeColumnsToContents()
 
     @pyqtSlot()
     @db_session
