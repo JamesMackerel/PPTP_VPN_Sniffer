@@ -3,7 +3,8 @@ from functools import wraps
 import psutil
 import socket
 import numpy as np
-from typing import List, Tuple
+from typing import *
+import threading
 
 
 def print_hex(b):
@@ -78,6 +79,28 @@ class RingBuffer():
         "Returns the first-in-first-out data in the ring buffer"
         idx = (self.index + np.arange(self.data.size)) % self.data.size
         return self.data[idx]
+
+
+class RepeatTimer:
+    def __init__(self, callback: Callable, interval: float, args: List = (), kwargs: Dict = ()):
+        self._callback = callback
+        self._interval = interval
+        self._args = args
+        self._kwargs = kwargs
+        self._timer = None  # type: threading.Timer
+
+    def start(self, *args, **kwargs):
+        self._timer = threading.Timer(self._interval, self.repeat_callback)
+        self._timer.start()
+
+    def repeat_callback(self):
+        self._callback(*self._args, **self._kwargs)
+        self.start()
+
+    def stop(self):
+        if hasattr(self, '_timer'):
+            self._timer.cancel()
+            del self._timer
 
 
 if __name__ == "__main__":
