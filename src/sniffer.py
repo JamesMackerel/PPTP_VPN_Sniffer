@@ -87,6 +87,7 @@ class UserSniffer(threading.Thread):
 
         self.q = data_queue
         self.exit_flag = False
+        self.setDaemon(True)
 
     def run(self):
         self.do_sniff()
@@ -122,7 +123,6 @@ class PptpUserLogger(object):
                 user = [u for u in self.log_in_user if u.identifier == packet.chap.identifier.hex_value][0]
                 user.server_call_id = packet.gre.key_call_id.hex_value
                 logging.info(user.name + '  logged in successfully.')
-                self.users[user.ip] = user
                 logging.info("%s's ip is %s" % (user.name, user.ip))
                 logging.info("%s's server_call_id is %d" % (user.name, user.server_call_id))
 
@@ -142,13 +142,14 @@ class PptpUserLogger(object):
 
         elif packet.highest_layer == "LCP":
             if packet.lcp.ppp_code.hex_value == 6:  # user terminates the data S->C
+                print('terminate lcp')
                 try:
-                    user = [u for u in self.log_in_user if u.server_call_id == packet.gre.key_call_id.hex_value][0]
+                    user = [u for u in self.users.values() if u.server_call_id == packet.gre.key_call_id.hex_value][0]
                 except IndexError:
+                    logging.info('did not find user who logged out')
                     return
                 username = user.name
-                self.log_in_user.remove(user)
-                del self.users[str(user.ip)]
+                del self.users[str(user.local_ip)]
                 logging.info("%s disconnected" % user.name)
                 for f in self.user_logout_handler:
                     f(user)
@@ -217,6 +218,8 @@ class Sniffer(object):
                      sniff_session=SniffSession.get(current_session=True))
 
     def send_user_logout(self, user: LogInUser):
+        print('logout')
+        user.capture_session = None
         self.data_queue.put({'type': 'user_logout', 'user': user})
 
     def sniff_user(self, user: LogInUser):
