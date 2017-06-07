@@ -53,12 +53,14 @@ class PacketParser:
                     host = str(p.ip.dst)
                     if str(p.ftp.request_command) == 'USER':  # this is a login request
                         action = 0
-                        content = str(p.ftp.request_arg)
                     elif str(p.ftp.request_command) == 'RETR':
                         action = 1
-                        content = str(p.ftp.request_arg)
+                    elif str(p.ftp.request_command) == 'PASS':
+                        action = 2
                     else:
                         return
+
+                    content = str(p.ftp.request_arg)
 
                     res['type'] = 'ftp_log'
                     res['host'] = host

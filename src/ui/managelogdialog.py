@@ -140,6 +140,8 @@ class FtpListModel(QAbstractTableModel):
                     return 'USER'
                 elif action == 1:
                     return 'RETR'
+                elif action == 2:
+                    return 'PASS'
             elif col == 4:
                 return self.logData[row].content
             elif col == 5:
