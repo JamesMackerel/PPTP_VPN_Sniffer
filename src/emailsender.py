@@ -50,17 +50,6 @@ class EmailSender:
         email_sender.sendmail(self.email_config['account'], [self.email_config['address']], msg.as_string())
         email_sender.close()
 
-        # res = requests.post(
-        #     "https://api.mailgun.net/v3/spade.world/messages",
-        #     auth=("api", "key-e6bc7da23e355f40265cf97dd8fed44a"),
-        #     data={"from": "VPN test <postmaster@spade.world>",
-        #           "to": self.email_config['address'],
-        #           "subject": "A dangerous host is visited.",
-        #           "text": content})
-        #
-        # print(res)
-        # print(res.text)
-
     def process(self, msg: Dict):
         try:
             if msg['type'] != 'http_log':
@@ -76,6 +65,7 @@ class EmailSender:
         try:
             if self.warning_list[msg['host']] == msg['method']:
                 logging.info('sending email.')
+                print(self.warning_pool)
 
                 username = User[msg['uid']].username
                 self.send(username + ' sent request to host which you consider dangerous. \nHost: ' + msg[
