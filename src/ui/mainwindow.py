@@ -131,7 +131,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # traffic diagram data
         self.trafficData = deque(np.zeros(100, dtype='f'), 100)
         self.trafficPlot = self.graphicsView.addPlot()
-        self.trafficPlot.setLabel('bottom', 'Traffic Diagram')
+        self.trafficPlot.setLabel('bottom', self.tr('Traffic Diagram'))
         self.trafficPlot.setClipToView(True)
         self.trafficPlot.setRange(yRange=[0, 1000])
         self.trafficPlot.setRange(xRange=[0, 60])
