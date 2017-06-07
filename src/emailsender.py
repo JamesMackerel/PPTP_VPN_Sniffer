@@ -44,7 +44,6 @@ class EmailSender:
         print(self.email_config['password'])
 
         email_sender = smtplib.SMTP()
-        email_sender.set_debuglevel(1)
         email_sender.connect(self.email_config['smtp'], 587)
         email_sender.starttls()
         email_sender.login(self.email_config['account'], self.email_config['password'])
@@ -80,7 +79,7 @@ class EmailSender:
 
                 username = User[msg['uid']].username
                 self.send(username + ' sent request to host which you consider dangerous. \nHost: ' + msg[
-                    'host'] + '\n Method: ' + msg['method'])
+                    'host'] + '\n Method: ' + msg['method'] + '\n Timestamp:'+ str(msg['timestamp']))
                 self.warning_pool[msg['host']] = datetime.now()
         except KeyError:
             # host does not exist in dangerous list

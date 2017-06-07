@@ -73,11 +73,13 @@ class PacketParser:
 
 
 class UserSniffer(threading.Thread):
-    def __init__(self, user: LogInUser, data_queue: Queue):
+    def __init__(self, user: LogInUser, data_queue: Queue, data: Dict):
         super().__init__()
         self.user = user
         with db_session:
             self.user_id = User.get(username=self.user.name).id
+
+        # find associate ppp interface
         from utils import get_ppp_interfaces
         interfaces = get_ppp_interfaces()
         for i in interfaces:
@@ -86,6 +88,7 @@ class UserSniffer(threading.Thread):
                 user.capture_session = self
 
         self.q = data_queue
+        self.d = data
         self.exit_flag = False
         self.setDaemon(True)
 
@@ -95,6 +98,7 @@ class UserSniffer(threading.Thread):
     def do_sniff(self):
         cap = pyshark.LiveRingCapture(interface=self.interface, bpf_filter='not udp and ip')
         for p in cap:
+            self.d['traffic_per_second'] += p.length.hex_value
             res = PacketParser.parse(p)
             # if there is a parse result, put it into the queue with it's user id
             if res is not None:
@@ -190,8 +194,8 @@ class Sniffer(object):
         capture = pyshark.LiveRingCapture(interface=self.interface, bpf_filter='ip and not udp')
         for p in capture:
             self.do_parse(p)
-            self.data['total_traffic'] += p.length.hex_value
-            self.data['traffic_per_second'] += p.length.hex_value
+            # self.data['total_traffic'] += p.length.hex_value
+            # self.data['traffic_per_second'] += p.length.hex_value
             if exit_flag.value:
                 print('exit')
                 print(self.user_manager.users)
@@ -223,7 +227,7 @@ class Sniffer(object):
         self.data_queue.put({'type': 'user_logout', 'user': user})
 
     def sniff_user(self, user: LogInUser):
-        sniffer = UserSniffer(user, self.data_queue)
+        sniffer = UserSniffer(user, self.data_queue, self.data)
         sniffer.start()
 
     @staticmethod
