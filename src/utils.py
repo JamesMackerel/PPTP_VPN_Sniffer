@@ -81,26 +81,25 @@ class RingBuffer():
         return self.data[idx]
 
 
-class RepeatTimer:
-    def __init__(self, callback: Callable, interval: float, args: List = (), kwargs: Dict = ()):
+class RepeatTimer(threading.Thread):
+    def __init__(self, callback: Callable, interval: float, args: List = (), kwargs: Dict = {}):
+        super().__init__()
         self._callback = callback
         self._interval = interval
         self._args = args
         self._kwargs = kwargs
         self._timer = None  # type: threading.Timer
+        self.stop_event = threading.Event()
+        self.stop_event.set()
 
-    def start(self, *args, **kwargs):
-        self._timer = threading.Timer(self._interval, self.repeat_callback)
-        self._timer.start()
-
-    def repeat_callback(self):
-        self._callback(*self._args, **self._kwargs)
-        self.start()
+    def run(self):
+        while self.stop_event.is_set():
+            timer = threading.Timer(self._interval, self._callback, args=self._args, kwargs=self._kwargs)
+            timer.start()
+            timer.join()
 
     def stop(self):
-        if hasattr(self, '_timer'):
-            self._timer.cancel()
-            del self._timer
+        self.stop_event.clear()
 
 
 if __name__ == "__main__":

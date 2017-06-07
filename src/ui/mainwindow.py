@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QMainWindow
 
 import sniffer
 from config import config_file_name
+import emailsender
 from database import *
 from .settingdialog import SettingDialog
 from .ui_py.mainwindow_ui import Ui_MainWindow
@@ -109,8 +110,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        # self.setWindowState(QtCore.Qt.WindowMaximized)
+        self.setWindowState(QtCore.Qt.WindowMaximized)
         self.tabView.setCurrentIndex(0)
+
+        self.email_sender = None  # type: emailsender.EmailSender
 
         self.user_login_check_timer = QtCore.QTimer()
         self.user_login_check_timer.timeout.connect(self.sniffer_message_handler)
@@ -119,8 +122,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         config = ConfigParser()
         config.read(config_file_name)
-        self.sniffer_process = sniffer.Sniffer(
-            config['DEFAULT']['interface'] if 'interface' in config['DEFAULT'] else None)
+        self.interface = config['DEFAULT']['interface'] if 'interface' in config['DEFAULT'] else None
+        self.sniffer_process = None
         self.sniff_started = False
 
         self.graphicsView.setBackground('w')
@@ -154,7 +157,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         with db_session:
             with db_session:
-                sessions = SniffSession.select(lambda s: s.current_session == True)[:]
+                sessions = SniffSession.select(lambda s: s.current_session is True)[:]
                 for s in sessions:
                     s.current_session = False
 
@@ -165,29 +168,53 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @QtCore.pyqtSlot()
     def on_startSnifferButton_clicked(self):
-        if self.sniff_started:
+        if self.sniff_started:  # if the sniffer is running
             self.sniffer_process.stop()
+            self.sniffer_process = None
             self.startSnifferButton.setText(self.tr("Start Sniffing"))
-            self.sniff_started = False
+
+            self.user_login_check_timer.stop()
+            self.update_traffic_update_timer.stop()
+            self.userListWidget.clear()
+
+            del self.email_sender
+
             with db_session:
                 session = SniffSession.get(current_session=True)
                 session.current_session = False
+
             self.ftpLogModel = FtpListModel()
             self.ftpTableView.setModel(self.ftpLogModel)
             self.httpLogModel = HttpTableModel()
             self.httpTableView.setModel(self.httpLogModel)
 
-            self.user_login_check_timer.stop()
-            self.update_traffic_update_timer.stop()
-            self.userListWidget.clear()
+            self.sniff_started = False
+
+            # enable buttons
+            self.loginLogPushButton.setEnabled(True)
+            self.searchLogButton.setEnabled(True)
+            self.emailWarningButton.setEnabled(True)
+            self.settingButton.setEnabled(True)
+
         else:
+            self.sniffer_process = sniffer.Sniffer(self.interface)
             self.sniffer_process.start()
             self.sniff_started = True
+
             with db_session:
                 SniffSession(timestamp=datetime.now(), current_session=True)
+
             self.startSnifferButton.setText(self.tr("Stop Sniffer"))
+
+            self.email_sender = emailsender.EmailSender()
             self.user_login_check_timer.start(1000)
             self.update_traffic_update_timer.start(1000)
+
+            # disable buttons
+            self.loginLogPushButton.setEnabled(False)
+            self.searchLogButton.setEnabled(False)
+            self.emailWarningButton.setEnabled(False)
+            self.settingButton.setEnabled(False)
 
     @QtCore.pyqtSlot()
     def on_searchLogButton_clicked(self):
@@ -200,6 +227,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def sniffer_message_handler(self):
         while not self.sniffer_process.data_queue.empty():
             msg = self.sniffer_process.data_queue.get()
+            self.email_sender.process(msg)
             try:
                 if msg['type'] == 'user_login':
                     self.userListWidget.addItem(msg['user'].name)
