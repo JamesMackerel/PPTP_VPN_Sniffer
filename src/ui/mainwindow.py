@@ -18,7 +18,7 @@ from .ui_py.mainwindow_ui import Ui_MainWindow
 
 class FtpListModel(QtCore.QAbstractTableModel):
     def __init__(self, parent=None):
-        self.logData = []  # type:list[FtpAccess]
+        self.logData = []  # type:List[FtpAccess]
         super().__init__()
 
     def columnCount(self, *args, **kwargs):

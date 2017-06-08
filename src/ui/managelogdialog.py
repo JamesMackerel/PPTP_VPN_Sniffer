@@ -74,18 +74,17 @@ class HttpTableModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
     @db_session
-    def new_select(self, s, *args):
+    def new_select(self, s, user: User = None):
         self.logData = []
         if s is None:
             return
-        if len(args) == 0:
+        if user is None:
             logs = s.http_accesses.select()[:]
-            for l in logs:
-                self.logData.append(l)
         else:
-            logs = select(l for l in HttpAccess if l.user == args[0], )
-            for l in logs:
-                self.logData.append(l)
+            logs = select(l for l in HttpAccess if l.user == user and l.sniff_session == s)
+
+        for l in logs:
+            self.logData.append(l)
 
         self.layoutChanged.emit()
 
@@ -156,10 +155,13 @@ class FtpListModel(QAbstractTableModel):
         self.logData = []
         self.layoutChanged.emit()
 
-    def new_select(self, s):
+    def new_select(self, s, user: User = None):
         self.logData = []
         with db_session:
-            logs = s.ftp_accesses.select()[:]
+            if user is None:
+                logs = s.ftp_accesses.select()[:]
+            else:
+                logs = select(l for l in FtpAccess if l.sniff_session == s and l.user == user)
             for l in logs:
                 self.logData.append(l)
         self.layoutChanged.emit()
@@ -215,6 +217,8 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
         self.ftpTableView.hideColumn(0)
         # self.ftpTableView.resizeColumnsToContents()
 
+        self.userComboBox.setCurrentIndex(0)
+
     @pyqtSlot()
     @db_session
     def on_deleteSessionButton_clicked(self):
@@ -246,3 +250,4 @@ class LogManageDialog(Ui_WarningHostsDialog, QDialog):
         session = self.sessions[self.sessionListWidget.currentIndex().row()]
 
         self.httpTableView.model().new_select(session, self.userComboBox.currentData())
+        self.ftpTableView.model().new_select(session, self.userComboBox.currentData())
