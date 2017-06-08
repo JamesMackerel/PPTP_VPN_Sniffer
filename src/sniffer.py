@@ -7,6 +7,7 @@ from database import *
 import logging
 import threading
 from typing import List, Dict, Tuple
+from typing import *
 
 
 class LogInUser:
@@ -117,6 +118,11 @@ class PptpUserLogger(object):
         self.user_logout_handler = []
         self.users = {}  # type:Dict[str, LogInUser]
 
+        from utils import RepeatTimer
+        self.clean_user_thread = RepeatTimer(self.clean_user, 5)
+        self.clean_user_thread.setDaemon(True)
+        self.clean_user_thread.start()
+
     def process(self, packet):
         if packet.highest_layer == "CHAP":
             if packet.chap.Code.hex_value == 2:  # client response, remember the user C->S
@@ -155,7 +161,10 @@ class PptpUserLogger(object):
                     logging.info('did not find user who logged out')
                     return
                 username = user.name
-                del self.users[str(user.local_ip)]
+                try:
+                    del self.users[str(user.local_ip)]
+                except KeyError:
+                    return
                 logging.info("%s disconnected" % user.name)
                 for f in self.user_logout_handler:
                     f(user)
@@ -165,6 +174,23 @@ class PptpUserLogger(object):
 
     def add_user_logged_out_handler(self, handler):
         self.user_logout_handler.append(handler)
+
+    def clean_user(self):
+        """
+        clean those users that has disconnected but whose lcp terminate ack was not captured.
+        :return: None
+        """
+        from utils import get_ppp_interfaces
+        interfaces = get_ppp_interfaces()
+        ip_list = [interface[1] for interface in interfaces]
+        users_to_del = [k for k, v in self.users.items() if v.local_ip not in ip_list]
+        logging.debug(self.users)
+        print(users_to_del)
+        print(ip_list)
+        for u in users_to_del:
+            for f in self.user_logout_handler:
+                f(self.users[u])
+            del self.users[u]
 
 
 class Sniffer(object):
@@ -176,10 +202,8 @@ class Sniffer(object):
         self.exit_flag = Value('B')
         self.exit_flag.value = False
 
-        self.user_manager = PptpUserLogger()
-        self.user_manager.add_user_logged_in_handler(self.send_user_login)
-        self.user_manager.add_user_logged_out_handler(self.send_user_logout)
-        self.user_manager.add_user_logged_in_handler(self.sniff_user)
+        # self.user_manager = PptpUserLogger()
+        self.user_manager = None
         # self.user_manager.add_user_logged_out_handler(self.stop_sniff_user)
 
     def start(self):
@@ -193,6 +217,11 @@ class Sniffer(object):
         # self.exit_flag = True
 
     def do_sniff(self, data_queue, data: dict, exit_flag: Value):
+        self.user_manager = PptpUserLogger()
+        self.user_manager.add_user_logged_in_handler(self.send_user_login)
+        self.user_manager.add_user_logged_out_handler(self.send_user_logout)
+        self.user_manager.add_user_logged_in_handler(self.sniff_user)
+
         capture = pyshark.LiveRingCapture(interface=self.interface, bpf_filter='ip and not udp')
         for p in capture:
             self.do_parse(p)
